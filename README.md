@@ -1,8 +1,8 @@
-# Kotlin GUI Starter
+# Kotlin GUI Level Meter Demo
 
-This is a starter project for a simple Kotlin GUI application.
+This is a demo showing how a Kotlin / Swing GUI app can show a graphical representation of a value in the app model data.
 
-The Java Swing library is used, plus the FlatLAF look-and-feel for a reasonably modern look.
+A panel is placed within another container / back panel, and resized based on the data value.
 
-The app is structured to provide a simple view / model setup with the App class storing application data (the 'model'), and the MainWindow class providing the 'view'.
+![demo.gif](demo.gif)
 

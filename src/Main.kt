@@ -1,15 +1,13 @@
 /**
  * ===============================================================
- * Kotlin GUI Starter
+ * Kotlin GUI Level Meter Demo
  * ===============================================================
  *
- * This is a starter project for a simple Kotlin GUI application.
- * The Java Swing library is used, plus the FlatLAF look-and-feel
- * for a reasonably modern look.
+ * This is a demo showing how a Kotlin / Swing GUI app can show
+ * a graphical representation of a value in the app model data.
  *
- * The app is structured to provide a simple view / model setup
- * with the App class storing application data (the 'model'), and
- * the MainWindow class providing the 'view'.
+ * A panel is placed within another container / back panel, and
+ * resized based on the data value.
  */
 
 import com.formdev.flatlaf.FlatDarkLaf
@@ -34,16 +32,22 @@ fun main() {
  * stored, plus any application logic functions
  */
 class App() {
-    // Constants defining any key values
-    val MAX_CLICKS = 10
+    // Constants
+    val MAX_VOL = 10
+    val MIN_VOL = 0
 
     // Data fields
-    var clicks = 0
+    var volume = MAX_VOL / 2
 
     // Application logic functions
-    fun updateClickCount() {
-        clicks++
-        if (clicks > MAX_CLICKS) clicks = MAX_CLICKS
+    fun increaseVolume() {
+        volume++
+        if (volume > MAX_VOL) volume = MAX_VOL
+    }
+
+    fun decreaseVolume() {
+        volume--
+        if (volume < MIN_VOL) volume = MIN_VOL
     }
 }
 
@@ -56,8 +60,10 @@ class App() {
 class MainWindow(val app: App) : JFrame(), ActionListener {
 
     // Fields to hold the UI elements
-    private lateinit var infoLabel: JLabel
-    private lateinit var helloButton: JButton
+    private lateinit var volBackPanel: JPanel
+    private lateinit var volLevelPanel: JPanel
+    private lateinit var upButton: JButton
+    private lateinit var downButton: JButton
 
     /**
      * Configure the UI and display it
@@ -69,15 +75,15 @@ class MainWindow(val app: App) : JFrame(), ActionListener {
         setLocationRelativeTo(null)     // Centre the window
         isVisible = true                // Make it visible
 
-        updateView()                    // Initialise view with model data
+        updateView()                    // Initialise the view with any app data
     }
 
     /**
      * Configure the main window
      */
     private fun configureWindow() {
-        title = "Kotlin Swing GUI Demo"
-        contentPane.preferredSize = Dimension(600, 350)
+        title = "Kotlin Swing GUI Level Demo"
+        contentPane.preferredSize = Dimension(375, 225)
         defaultCloseOperation = WindowConstants.EXIT_ON_CLOSE
         isResizable = false
         layout = null
@@ -89,19 +95,32 @@ class MainWindow(val app: App) : JFrame(), ActionListener {
      * Populate the UI with UI controls
      */
     private fun addControls() {
-        val baseFont = Font(Font.SANS_SERIF, Font.PLAIN, 36)
+        val baseFont = Font(Font.SANS_SERIF, Font.PLAIN, 24)
 
-        infoLabel = JLabel("INFO HERE")
-        infoLabel.horizontalAlignment = SwingConstants.CENTER
-        infoLabel.bounds = Rectangle(50, 50, 500, 100)
-        infoLabel.font = baseFont
-        add(infoLabel)
+        // This panel acts as the 'back' of the level meter
+        volBackPanel = JPanel()
+        volBackPanel.bounds = Rectangle(25, 25, 325, 100)
+        volBackPanel.background = Color.BLACK
+        volBackPanel.layout = null                // Want layout to be manual
+        add(volBackPanel)
 
-        helloButton = JButton("Click Me!")
-        helloButton.bounds = Rectangle(50,200,500,100)
-        helloButton.font = baseFont
-        helloButton.addActionListener(this)     // Handle any clicks
-        add(helloButton)
+        // And this one sits inside the one above to make resizing it easier
+        volLevelPanel = JPanel()
+        volLevelPanel.bounds = Rectangle(0, 0, 325, 100)
+        volLevelPanel.background = Color.YELLOW
+        volBackPanel.add(volLevelPanel)           // Add this panel inside the other
+
+        downButton = JButton("Down")
+        downButton.bounds = Rectangle(25, 150, 150, 50)
+        downButton.font = baseFont
+        downButton.addActionListener(this)     // Handle any clicks
+        add(downButton)
+
+        upButton = JButton("Up")
+        upButton.bounds = Rectangle(200, 150, 150, 50)
+        upButton.font = baseFont
+        upButton.addActionListener(this)     // Handle any clicks
+        add(upButton)
     }
 
 
@@ -110,13 +129,22 @@ class MainWindow(val app: App) : JFrame(), ActionListener {
      * of the application model
      */
     fun updateView() {
-        if (app.clicks == app.MAX_CLICKS) {
-            infoLabel.text = "Max clicks reached!"
-            helloButton.isEnabled = false
-        }
-        else {
-            infoLabel.text = "You clicked ${app.clicks} times"
-        }
+        // Sizes of the volume bar
+        val volWidth = calcVolumePanelWidth()
+        val volHeight = volBackPanel.size.height
+
+        // Update the bar's size
+        volLevelPanel.bounds = Rectangle(0, 0, volWidth, volHeight)
+    }
+
+    /**
+     * Work out the volume bar width based on the parent back panel's width
+     */
+    fun calcVolumePanelWidth(): Int {
+        val volFraction = app.volume.toDouble() / app.MAX_VOL   // Volume from 0.0 to 1.0
+        val maxWidth = volBackPanel.bounds.width                // Size of background panel
+        val volWidth = (maxWidth * volFraction).toInt()         // Size in px
+        return volWidth
     }
 
     /**
@@ -125,13 +153,14 @@ class MainWindow(val app: App) : JFrame(), ActionListener {
      * then refreshing the UI view
      */
     override fun actionPerformed(e: ActionEvent?) {
+        // Update app data model based on button clicks
         when (e?.source) {
-            helloButton -> {
-                app.updateClickCount()
-                updateView()
-            }
+            upButton -> app.increaseVolume()
+            downButton -> app.decreaseVolume()
         }
-    }
 
+        // And ensure the UI view matched the updated app model data
+        updateView()
+    }
 }
 
